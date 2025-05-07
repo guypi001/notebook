@@ -1,0 +1,32 @@
+#############################################################
+#  render.yaml – Blueprint Render pour ton projet FastAPI   #
+#############################################################
+
+# --- Service web FastAPI (conteneur Docker) ----------------
+services:
+  - type: web
+    name: backend                      # apparaîtra dans l’URL *.onrender.com
+    runtime: docker                    # construit l’image depuis Dockerfile
+    plan: free                         # 750 h/mois gratuites :contentReference[oaicite:0]{index=0}
+    dockerfilePath: ./Dockerfile       # optionnel (défaut)
+    region: frankfurt                  # proche de Paris (latence moindre)
+    healthCheckPath: /docs             # Swagger marche en prod, 0 downtime
+    envVars:                           # variables d’env. injectées au conteneur
+      - key: DATABASE_URL              # URL complète postgresql://…
+        fromDatabase:                  # ← Render la génère pour toi
+          name: pfe-db                 # ↳ correspond au bloc databases ci‑dessous
+          property: connectionString   # :contentReference[oaicite:1]{index=1}
+      - key: PORT
+        value: "8000"                  # uvicorn écoute déjà 8000 dans ton CMD
+    autoDeploy: true                   # build et déploiement à chaque `git push`
+
+# --- Base de données Postgres managée ----------------------
+databases:
+  - name: pfe-db                       # référence interne
+    databaseName: yourdb               # nom réel de la BDD
+    user: user                         # identifiant DB
+    plan: free                         # 1 Go disque, parfait pour démo
+
+#############################################################
+# Fin du fichier                                            #
+#############################################################
