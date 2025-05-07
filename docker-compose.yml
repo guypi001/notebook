@@ -1,5 +1,9 @@
+<<<<<<< HEAD
 version: "3.8"
 
+=======
+version: '3.8'
+>>>>>>> 80e293f (initial)
 services:
   db:
     image: postgres:15
