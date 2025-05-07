@@ -1,8 +1,10 @@
-fastapi
-uvicorn[standard]
-sqlalchemy
-psycopg2-binary
-pydantic
-torch
-numpy
-scikit-learn
+--extra-index-url https://download.pytorch.org/whl/cpu          # ← ajoute l’index CPU PyTorch :contentReference[oaicite:1]{index=1}
+
+fastapi==0.115.12           # dernière 0.x stable compatible Python 3.10 :contentReference[oaicite:2]{index=2}
+uvicorn[standard]==0.34.2   # worker ASGI :contentReference[oaicite:3]{index=3}
+sqlalchemy==2.0.40          # ORM moderne :contentReference[oaicite:4]{index=4}
+psycopg2-binary==2.9.10     # driver Postgres :contentReference[oaicite:5]{index=5}
+pydantic==2.11.4            # validation de données :contentReference[oaicite:6]{index=6}
+torch==2.7.0+cpu            # wheel CPU‑only → ~200 Mo en RAM :contentReference[oaicite:7]{index=7}
+numpy==2.2.5                # compat PyTorch/Sklearn :contentReference[oaicite:8]{index=8}
+scikit-learn==1.6.1         # modèles ML classiques :contentReference[oaicite:9]{index=9}
