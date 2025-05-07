@@ -1,26 +1,24 @@
-###########################
-# render.yaml corrigé     #
-###########################
-
+# Infrastructure‑as‑Code Render Blueprint
+# Docs : https://render.com/docs/blueprint-spec
 services:
   - type: web
     name: backend
     runtime: docker
-    region: frankfurt      # ← backend en Frankfort
     plan: free
+    region: frankfurt          # même région que la DB :contentReference[oaicite:0]{index=0}
     dockerfilePath: ./Dockerfile
-    healthCheckPath: /docs
+    healthCheckPath: /docs     # Swagger = OK => 200
     envVars:
-      - key: DATABASE_URL
+      - key: DATABASE_URL      # chaîne interne, résoluble dans le VPC
         fromDatabase:
           name: pfe-db
-          property: connectionString  # URL interne correcte  :contentReference[oaicite:1]{index=1}
-      - key: PORT
+          property: connectionString :contentReference[oaicite:1]{index=1}
+      - key: PORT              # Render injecte le même nombre
         value: "8000"
 
 databases:
   - name: pfe-db
-    plan: free
-    region: frankfurt      # ← **ajouté**
+    plan: free                 # 1 Go disque suffisant pour un PFE :contentReference[oaicite:2]{index=2}
+    region: frankfurt
     databaseName: yourdb
     user: user
