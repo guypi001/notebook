@@ -13,7 +13,7 @@ services:
         fromDatabase:
           name: pfe-db
           property: connectionString :contentReference[oaicite:1]{index=1}
-      - key: PORT              # Render injecte le même nombre
+      - key: PORT              # Render injecte le même nombre hhh
         value: "8000"
 
 databases:
