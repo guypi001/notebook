@@ -23,8 +23,9 @@ from sqlalchemy.orm import sessionmaker, Session
 # --- 2. Base de données -------------------------------------------------
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
-    "postgresql://user:pass@db:5432/yourdb"
+    "postgresql://postgres:WxWiNbrnGbLVyiNDeUxBlNLYUhCXCnsS@pfe-db.railway.internal:5432/railway"
 )
+
 
 engine = create_engine(DATABASE_URL, future=True)
 SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
