@@ -32,53 +32,15 @@ exclude_cols = ['id_individu', 'date', 'bp24_target_systolic', 'bp24_target_dias
                 'bp3_target_systolic', 'bp3_target_diastolic', 'risk_target']
 feature_cols = [col for col in df_model.columns if col not in exclude_cols]
 
-# Pour construire les séquences, on groupe par individu
-data_instances = []
-for id_indiv, group in df_model.groupby('id_individu'):
-    group = group.sort_values('date').reset_index(drop=True)
-    # On ne peut créer une instance que si on dispose d'au moins 4 jours consécutifs
-    if len(group) < 4:
-        continue
-    # Pour i allant de 3 à len(group)-1 (car la cible est déjà décalée pour le jour i)
-    for i in range(3, len(group)):
-        seq_input = group.loc[i-3:i-1, feature_cols].values  # les 3 jours précédents
-        static_input = group.loc[i, feature_cols].values      # le jour courant
-        target_bp24 = group.loc[i, ['bp24_target_systolic', 'bp24_target_diastolic']].values.astype(np.float32)
-        target_bp3 = group.loc[i, ['bp3_target_systolic', 'bp3_target_diastolic']].values.astype(np.float32)
-        target_risk = np.array([group.loc[i, 'risk_target']], dtype=np.float32)
-        
-        data_instances.append({
-            'seq_input': seq_input,            # shape (3, feature_dim)
-            'static_input': static_input,      # shape (feature_dim,)
-            'target_bp24': target_bp24,        # shape (2,)
-            'target_bp3': target_bp3,          # shape (2,)
-            'target_risk': target_risk         # shape (1,)
-        })
-
-print(f"Nombre d'instances : {len(data_instances)}")
-
-# 3. Division en ensembles d'entraînement, validation et test selon les individus
-unique_ids = df_model['id_individu'].unique()
-train_ids, test_ids = train_test_split(unique_ids, test_size=0.15, random_state=42)
-train_ids, val_ids = train_test_split(train_ids, test_size=0.15/(0.85), random_state=42)
-
-def filter_instances(instances, valid_ids):
-    return [inst for inst in instances if inst['seq_input'][0][0] in 
-            df_model[df_model['id_individu'].isin(valid_ids)]['id_individu'].values]  # Trick pas parfait...
-    
-# Pour s'assurer de la répartition par individu, on refait le filtrage à partir des instances:
-train_instances = [inst for inst in data_instances if inst['static_input'][0] == inst['static_input'][0]]  # on utilisera le champ 'id_individu' provenant du dataset original
-# Mieux : on crée notre Dataset directement en utilisant l'id_individu stocké dans chaque instance.
-# On refait la création d'instances en ajoutant l'id_individu :
-
+# Pour construire les séquences, on groupe par individu et on conserve l'identifiant
 data_instances = []
 for id_indiv, group in df_model.groupby('id_individu'):
     group = group.sort_values('date').reset_index(drop=True)
     if len(group) < 4:
         continue
     for i in range(3, len(group)):
-        seq_input = group.loc[i-3:i-1, feature_cols].values  # (3, feature_dim)
-        static_input = group.loc[i, feature_cols].values      # (feature_dim,)
+        seq_input = group.loc[i-3:i-1, feature_cols].values
+        static_input = group.loc[i, feature_cols].values
         target_bp24 = group.loc[i, ['bp24_target_systolic', 'bp24_target_diastolic']].values.astype(np.float32)
         target_bp3 = group.loc[i, ['bp3_target_systolic', 'bp3_target_diastolic']].values.astype(np.float32)
         target_risk = np.array([group.loc[i, 'risk_target']], dtype=np.float32)
@@ -91,9 +53,20 @@ for id_indiv, group in df_model.groupby('id_individu'):
             'target_risk': target_risk
         })
 
-train_instances = [inst for inst in data_instances if inst['id_individu'] in train_ids]
-val_instances = [inst for inst in data_instances if inst['id_individu'] in val_ids]
-test_instances = [inst for inst in data_instances if inst['id_individu'] in test_ids]
+print(f"Nombre d'instances : {len(data_instances)}")
+
+# 3. Division en ensembles d'entraînement, validation et test selon les individus
+unique_ids = df_model['id_individu'].unique()
+train_ids, test_ids = train_test_split(unique_ids, test_size=0.15, random_state=42)
+train_ids, val_ids = train_test_split(train_ids, test_size=0.15/0.85, random_state=42)
+
+def filter_instances(instances, valid_ids):
+    """Filtre les instances en fonction des identifiants d'individus."""
+    return [inst for inst in instances if inst['id_individu'] in valid_ids]
+
+train_instances = filter_instances(data_instances, train_ids)
+val_instances = filter_instances(data_instances, val_ids)
+test_instances = filter_instances(data_instances, test_ids)
 
 print(f"Instances Train: {len(train_instances)}, Val: {len(val_instances)}, Test: {len(test_instances)}")
 
